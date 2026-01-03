@@ -101,7 +101,7 @@ class GitHubClient:
             "X-GitHub-Api-Version": "2022-11-28",
         }
 
-    async def _request(  # noqa: PLR0912
+    async def _request(
         self,
         method: str,
         path: str,

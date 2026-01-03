@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from rich.console import Console
 
 
-def run_release(  # noqa: PLR0912
+def run_release(
     path: str | None,
     dry_run: bool,
     skip_publish: bool,
