@@ -49,7 +49,7 @@ class TestReleasePyConfig:
         assert config.commits.types_patch == ["fix", "perf"]
         assert config.changelog.enabled is True
         assert config.version.initial_version == "0.1.0"
-        assert config.github.release_pr_branch == "py-release/release"
+        assert config.github.release_pr_branch == "releasio/release"
         assert config.publish.tool == "uv"
 
     def test_effective_tag_prefix(self):
@@ -237,7 +237,7 @@ class TestGitHubConfig:
 
         assert config.owner is None
         assert config.repo is None
-        assert config.release_pr_branch == "py-release/release"
+        assert config.release_pr_branch == "releasio/release"
         assert config.release_pr_labels == ["release"]
 
 
@@ -428,10 +428,10 @@ class TestExtractReleasePyConfig:
     """Tests for extract_release_py_config()."""
 
     def test_extract_existing_config(self):
-        """Extract existing py-release config."""
+        """Extract existing releasio config."""
         pyproject = {
             "tool": {
-                "py-release": {
+                "releasio": {
                     "default_branch": "develop",
                 }
             }
@@ -459,7 +459,7 @@ class TestLoadConfig:
         assert config.default_branch == "main"
 
     def test_load_defaults_when_no_config(self, tmp_path: Path):
-        """Load defaults when no [tool.py-release] section."""
+        """Load defaults when no [tool.releasio] section."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(
             """\

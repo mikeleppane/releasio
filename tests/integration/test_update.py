@@ -186,7 +186,7 @@ class TestUpdateExecute:
 
             assert "Next steps" in result.stdout
             assert "git add" in result.stdout
-            assert "py-release release" in result.stdout
+            assert "releasio release" in result.stdout
 
 
 class TestUpdateErrors:
@@ -321,10 +321,10 @@ description = "A test project"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.py-release]
+[tool.releasio]
 default_branch = "main"
 
-[tool.py-release.version]
+[tool.releasio.version]
 initial_version = "1.0.0"
 """
         )

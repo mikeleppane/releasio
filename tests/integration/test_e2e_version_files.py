@@ -66,11 +66,11 @@ description = "Test package"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.py-release]
+[tool.releasio]
 default_branch = "main"
 allow_dirty = true
 
-[tool.py-release.version]
+[tool.releasio.version]
 auto_detect_version_files = true
 update_lock_file = true
 """)
@@ -125,10 +125,10 @@ description = "Flat layout package"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.py-release]
+[tool.releasio]
 default_branch = "main"
 
-[tool.py-release.version]
+[tool.releasio.version]
 auto_detect_version_files = true
 update_lock_file = false
 """)
@@ -189,11 +189,11 @@ python = "^3.11"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.py-release]
+[tool.releasio]
 default_branch = "main"
 allow_dirty = true
 
-[tool.py-release.version]
+[tool.releasio.version]
 auto_detect_version_files = true
 update_lock_file = true
 """)
@@ -252,11 +252,11 @@ distribution = true
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
-[tool.py-release]
+[tool.releasio]
 default_branch = "main"
 allow_dirty = true
 
-[tool.py-release.version]
+[tool.releasio.version]
 auto_detect_version_files = true
 update_lock_file = true
 """)
@@ -528,7 +528,7 @@ class TestEdgeCases:
 name = "mismatched"
 version = "1.0.0"
 
-[tool.py-release.version]
+[tool.releasio.version]
 auto_detect_version_files = true
 """)
 
@@ -577,7 +577,7 @@ auto_detect_version_files = true
 name = "noversion"
 version = "1.0.0"
 
-[tool.py-release.version]
+[tool.releasio.version]
 auto_detect_version_files = true
 """)
 
@@ -653,7 +653,7 @@ auto_detect_version_files = true
 name = "toplevel"
 version = "1.0.0"
 
-[tool.py-release.version]
+[tool.releasio.version]
 auto_detect_version_files = true
 """)
 
@@ -683,7 +683,7 @@ auto_detect_version_files = true
 name = "singlequotes"
 version = '1.0.0'
 
-[tool.py-release.version]
+[tool.releasio.version]
 auto_detect_version_files = true
 """)
 
@@ -707,7 +707,7 @@ auto_detect_version_files = true
 name = "explicit"
 version = "1.0.0"
 
-[tool.py-release.version]
+[tool.releasio.version]
 auto_detect_version_files = true
 version_files = ["custom_version.txt"]
 """)

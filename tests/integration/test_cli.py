@@ -28,7 +28,7 @@ class TestCLIVersion:
         """--version shows version."""
         result = runner.invoke(app, ["--version"])
         assert result.exit_code == 0
-        assert "py-release" in result.stdout
+        assert "releasio" in result.stdout
         assert "0.1.0" in result.stdout
 
     def test_short_version_flag(self):
@@ -178,7 +178,7 @@ class TestCLIInit:
         assert len(output) > 0  # Should produce some output
 
     def test_init_creates_config(self, tmp_path: Path):
-        """init creates py-release config in pyproject.toml."""
+        """init creates releasio config in pyproject.toml."""
         # Create minimal pyproject.toml
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text('[project]\nname = "test"\nversion = "0.1.0"\n')
@@ -191,15 +191,15 @@ class TestCLIInit:
         )
 
         assert result.exit_code == 0
-        assert "py-release" in pyproject.read_text()
-        assert "[tool.py-release]" in pyproject.read_text()
+        assert "releasio" in pyproject.read_text()
+        assert "[tool.releasio]" in pyproject.read_text()
 
     def test_init_already_configured(self, tmp_path: Path):
         """init detects existing configuration."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(
             '[project]\nname = "test"\nversion = "0.1.0"\n\n'
-            '[tool.py-release]\ndefault_branch = "main"\n'
+            '[tool.releasio]\ndefault_branch = "main"\n'
         )
 
         result = runner.invoke(app, ["init", str(tmp_path)])
@@ -213,7 +213,7 @@ class TestCLIInit:
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(
             '[project]\nname = "test"\nversion = "0.1.0"\n\n'
-            '[tool.py-release]\ndefault_branch = "old"\n'
+            '[tool.releasio]\ndefault_branch = "old"\n'
         )
 
         result = runner.invoke(
@@ -240,7 +240,7 @@ class TestCLIInit:
         assert result.exit_code == 0
         workflow_path = tmp_path / ".github" / "workflows" / "release.yml"
         assert workflow_path.exists()
-        assert "py-release" in workflow_path.read_text()
+        assert "releasio" in workflow_path.read_text()
 
     def test_init_creates_pr_check_workflow(self, tmp_path: Path):
         """init creates PR title check workflow when requested."""
