@@ -66,23 +66,23 @@ def load_pyproject_toml(path: Path) -> dict[str, Any]:
 
 
 def extract_release_py_config(pyproject: dict[str, Any]) -> dict[str, Any]:
-    """Extract [tool.py-release] section from pyproject.toml data.
+    """Extract [tool.releasio] section from pyproject.toml data.
 
     Args:
         pyproject: Parsed pyproject.toml data
 
     Returns:
-        The py-release configuration dict (empty if not present)
+        The releasio configuration dict (empty if not present)
     """
     tool: dict[str, Any] = pyproject.get("tool", {})
-    result: dict[str, Any] = tool.get("py-release", {})
+    result: dict[str, Any] = tool.get("releasio", {})
     return result
 
 
 def load_config(path: Path | None = None) -> ReleasePyConfig:
-    """Load py-release configuration from pyproject.toml.
+    """Load releasio configuration from pyproject.toml.
 
-    Configuration is read from [tool.py-release] section.
+    Configuration is read from [tool.releasio] section.
     Missing config uses sensible defaults.
 
     Args:

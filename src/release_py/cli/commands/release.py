@@ -240,7 +240,7 @@ def run_release(
                     else ""
                 )
                 + "\n"
-                "Thank you for using release-py! ⭐",
+                "Thank you for using releasio! ⭐",
                 title="[bold green]Release Complete[/]",
                 border_style="green",
             )
@@ -325,6 +325,6 @@ def _generate_release_body(
     # Footer
     lines.append("---")
     lines.append("")
-    lines.append("_Released with [release-py](https://github.com/mikeleppane/release-py)_")
+    lines.append("_Released with [releasio](https://github.com/mikeleppane/release-py)_")
 
     return "\n".join(lines)

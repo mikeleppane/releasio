@@ -1,6 +1,6 @@
-# Contributing to py-release
+# Contributing to releasio
 
-Thank you for your interest in contributing to py-release! This document provides
+Thank you for your interest in contributing to releasio! This document provides
 guidelines and instructions to help you contribute effectively.
 
 ## Table of Contents
@@ -248,8 +248,8 @@ git commit -m "fix(changelog): handle commits without PR references"
 # Breaking change
 git commit -m "feat!: redesign configuration schema
 
-BREAKING CHANGE: The [tool.py-release.version] section has been renamed
-to [tool.py-release.versioning]."
+BREAKING CHANGE: The [tool.releasio.version] section has been renamed
+to [tool.releasio.versioning]."
 
 # Documentation
 git commit -m "docs: add monorepo configuration examples"
@@ -296,7 +296,7 @@ docs: improve GitHub Actions examples
 
 ## Release Process
 
-Releases are automated using py-release itself! When changes are merged to `main`:
+Releases are automated using releasio itself! When changes are merged to `main`:
 
 1. The `release-pr` workflow creates/updates a release PR
 2. When the release PR is merged, the `release` workflow:
@@ -313,4 +313,4 @@ Releases are automated using py-release itself! When changes are merged to `main
 
 ---
 
-Thank you for contributing to py-release!
+Thank you for contributing to releasio!

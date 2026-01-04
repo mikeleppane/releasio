@@ -533,7 +533,7 @@ def _generate_pr_body(
         [
             "---",
             "",
-            "_This PR was automatically created by [release-py](https://github.com/mikeleppane/release-py)_",
+            "_This PR was automatically created by [releasio](https://github.com/mikeleppane/release-py)_",
         ]
     )
 

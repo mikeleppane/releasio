@@ -1,4 +1,4 @@
-name: 'py-release'
+name: 'releasio'
 description: 'Automated releases for Python projects - handles versioning, changelogs, and publishing'
 author: 'Mikko Leppanen'
 
@@ -15,7 +15,7 @@ inputs:
       - check: Preview what would happen (dry-run)
       - check-pr: Validate PR title follows conventional commits
       - update: Update version and changelog locally
-      - init: Initialize py-release configuration
+      - init: Initialize releasio configuration
     required: true
 
   github-token:
@@ -38,13 +38,18 @@ inputs:
     required: false
     default: '3.11'
 
-  py-release-version:
-    description: 'Version of py-release to install (default: latest). Use "source" to install from current repo.'
+  releasio-version:
+    description: 'Version of releasio to install (default: latest). Use "source" to install from current repo.'
     required: false
     default: ''
 
   dry-run:
-    description: 'Run in dry-run mode (no actual changes)'
+    description: 'Run in dry-run mode (no actual changes). Applies to release-pr and release commands.'
+    required: false
+    default: 'false'
+
+  execute:
+    description: 'Execute changes (update command only). By default, update runs in dry-run mode.'
     required: false
     default: 'false'
 
@@ -58,30 +63,40 @@ inputs:
     required: false
     default: 'false'
 
+  prerelease:
+    description: 'Create a pre-release version (update command only). Values: alpha, beta, rc'
+    required: false
+    default: ''
+
+  version-override:
+    description: 'Override calculated version (update command only). Example: 2.0.0'
+    required: false
+    default: ''
+
 outputs:
   version:
     description: 'The version that was/would be released'
-    value: ${{ steps.release-py.outputs.version }}
+    value: ${{ steps.releasio.outputs.version }}
 
   pr-number:
     description: 'The PR number (for release-pr command)'
-    value: ${{ steps.release-py.outputs.pr-number }}
+    value: ${{ steps.releasio.outputs.pr-number }}
 
   pr-url:
     description: 'The PR URL (for release-pr command)'
-    value: ${{ steps.release-py.outputs.pr-url }}
+    value: ${{ steps.releasio.outputs.pr-url }}
 
   release-url:
     description: 'The GitHub release URL (for release command)'
-    value: ${{ steps.release-py.outputs.release-url }}
+    value: ${{ steps.releasio.outputs.release-url }}
 
   tag:
     description: 'The git tag created (for release command)'
-    value: ${{ steps.release-py.outputs.tag }}
+    value: ${{ steps.releasio.outputs.tag }}
 
   valid:
     description: 'Whether PR title is valid (for check-pr command)'
-    value: ${{ steps.release-py.outputs.valid }}
+    value: ${{ steps.releasio.outputs.valid }}
 
 runs:
   using: 'composite'
@@ -106,22 +121,22 @@ runs:
       with:
         enable-cache: true
 
-    - name: Install py-release
+    - name: Install releasio
       shell: bash
       run: |
-        if [[ "${{ inputs.py-release-version }}" == "source" ]]; then
-          echo "Installing py-release from source..."
-          uv tool install --from . py-release
-        elif [[ -n "${{ inputs.py-release-version }}" ]]; then
-          echo "Installing py-release==${{ inputs.py-release-version }}..."
-          uv tool install "py-release==${{ inputs.py-release-version }}"
+        if [[ "${{ inputs.releasio-version }}" == "source" ]]; then
+          echo "Installing releasio from source..."
+          uv tool install --from . releasio
+        elif [[ -n "${{ inputs.releasio-version }}" ]]; then
+          echo "Installing releasio==${{ inputs.releasio-version }}..."
+          uv tool install "releasio==${{ inputs.releasio-version }}"
         else
-          echo "Installing latest py-release..."
-          uv tool install py-release
+          echo "Installing latest releasio..."
+          uv tool install releasio
         fi
 
-    - name: Run py-release
-      id: release-py
+    - name: Run releasio
+      id: releasio
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
@@ -136,25 +151,48 @@ runs:
         set -euo pipefail
 
         # Build command with options
-        CMD="py-release ${{ inputs.command }}"
-
-        # Add --dry-run for commands that support it
-        if [[ "${{ inputs.dry-run }}" == "true" ]]; then
-          case "${{ inputs.command }}" in
-            release-pr|release|check)
-              CMD="$CMD --dry-run"
-              ;;
-          esac
-        fi
+        CMD="releasio ${{ inputs.command }}"
 
         # Add command-specific options
-        if [[ "${{ inputs.command }}" == "release" && "${{ inputs.skip-publish }}" == "true" ]]; then
-          CMD="$CMD --skip-publish"
-        fi
+        case "${{ inputs.command }}" in
+          release-pr)
+            if [[ "${{ inputs.dry-run }}" == "true" ]]; then
+              CMD="$CMD --dry-run"
+            fi
+            ;;
 
-        if [[ "${{ inputs.command }}" == "check-pr" && "${{ inputs.require-scope }}" == "true" ]]; then
-          CMD="$CMD --require-scope"
-        fi
+          release)
+            if [[ "${{ inputs.dry-run }}" == "true" ]]; then
+              CMD="$CMD --dry-run"
+            fi
+            if [[ "${{ inputs.skip-publish }}" == "true" ]]; then
+              CMD="$CMD --skip-publish"
+            fi
+            ;;
+
+          update)
+            # update command uses --execute to apply changes (default is dry-run)
+            if [[ "${{ inputs.execute }}" == "true" ]]; then
+              CMD="$CMD --execute"
+            fi
+            if [[ -n "${{ inputs.prerelease }}" ]]; then
+              CMD="$CMD --prerelease ${{ inputs.prerelease }}"
+            fi
+            if [[ -n "${{ inputs.version-override }}" ]]; then
+              CMD="$CMD --version ${{ inputs.version-override }}"
+            fi
+            ;;
+
+          check-pr)
+            if [[ "${{ inputs.require-scope }}" == "true" ]]; then
+              CMD="$CMD --require-scope"
+            fi
+            ;;
+
+          check|init)
+            # These commands don't have additional options
+            ;;
+        esac
 
         echo "::group::Running: $CMD"
 
@@ -210,9 +248,13 @@ runs:
             fi
             ;;
 
-          check)
-            # Extract next version from check output
+          check|update)
+            # Extract next version from check/update output
             version=$(echo "$output" | grep -oE 'Next version:\s*v?[0-9]+\.[0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
+            if [[ -z "$version" ]]; then
+              # Try alternate format: "1.0.0 → 1.1.0"
+              version=$(echo "$output" | grep -oE '→\s*v?[0-9]+\.[0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
+            fi
             if [[ -n "$version" ]]; then
               echo "version=$version" >> "$GITHUB_OUTPUT"
             fi

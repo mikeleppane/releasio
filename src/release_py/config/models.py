@@ -1,6 +1,6 @@
-"""Pydantic models for py-release configuration.
+"""Pydantic models for releasio configuration.
 
-Configuration is read from pyproject.toml under [tool.py-release].
+Configuration is read from pyproject.toml under [tool.releasio].
 All fields have sensible defaults for zero-config usage.
 """
 
@@ -235,7 +235,7 @@ class ChangelogConfig(BaseModel):
     generate_cliff_config: bool = Field(
         default=False,
         description=(
-            "Auto-generate git-cliff config from py-release settings. "
+            "Auto-generate git-cliff config from releasio settings."
             "Maps section_headers and commit_parsers to cliff.toml format."
         ),
     )
@@ -303,7 +303,7 @@ class GitHubConfig(BaseModel):
         description="GitHub API URL (for GitHub Enterprise, e.g., https://github.mycompany.com/api/v3)",
     )
     release_pr_branch: str = Field(
-        default="py-release/release",
+        default="releasio/release",
         description="Branch name for release PRs",
     )
     release_pr_labels: list[str] = Field(
@@ -392,9 +392,9 @@ class HooksConfig(BaseModel):
 
 
 class ReleasePyConfig(BaseModel):
-    """Main configuration for py-release.
+    """Main configuration for releasio.
 
-    Read from pyproject.toml under [tool.py-release].
+    Read from pyproject.toml under [tool.releasio].
     All fields have sensible defaults for zero-config usage.
     """
 

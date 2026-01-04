@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="images/logo.png" alt="py-release logo" width="200">
+  <img src="images/logo.png" alt="releasio logo" width="200">
 </p>
 
-<h1 align="center">py-release</h1>
+<h1 align="center">releasio</h1>
 
 <p align="center">
   <strong>Automated releases for Python projects</strong><br>
@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/py-release/"><img src="https://img.shields.io/pypi/v/py-release.svg" alt="PyPI version"></a>
-  <a href="https://pypi.org/project/py-release/"><img src="https://img.shields.io/pypi/pyversions/py-release.svg" alt="Python versions"></a>
+  <a href="https://pypi.org/project/releasio/"><img src="https://img.shields.io/pypi/v/releasio.svg" alt="PyPI version"></a>
+  <a href="https://pypi.org/project/releasio/"><img src="https://img.shields.io/pypi/pyversions/releasio.svg" alt="Python versions"></a>
   <a href="https://github.com/mikeleppane/release-py/blob/main/LICENSE"><img src="https://img.shields.io/github/license/mikeleppane/release-py.svg" alt="License"></a>
   <a href="https://github.com/mikeleppane/release-py/actions/workflows/ci.yml"><img src="https://github.com/mikeleppane/release-py/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://codecov.io/gh/mikeleppane/release-py"><img src="https://codecov.io/gh/mikeleppane/release-py/branch/main/graph/badge.svg" alt="codecov"></a>
@@ -25,7 +25,7 @@
 
 ---
 
-Inspired by [release-plz](https://github.com/MarcoIeni/release-plz), py-release brings the same powerful release automation to the Python ecosystem. It analyzes your [Conventional Commits](https://www.conventionalcommits.org/) to automatically determine version bumps, generate beautiful changelogs, and publish to PyPI.
+Inspired by [release-plz](https://github.com/MarcoIeni/release-plz), releasio brings the same powerful release automation to the Python ecosystem. It analyzes your [Conventional Commits](https://www.conventionalcommits.org/) to automatically determine version bumps, generate beautiful changelogs, and publish to PyPI.
 
 ## Features
 
@@ -43,54 +43,54 @@ Inspired by [release-plz](https://github.com/MarcoIeni/release-plz), py-release 
 
 ```bash
 # Using uv (recommended)
-uv tool install py-release
+uv tool install releasio
 
 # Using pip
-pip install py-release
+pip install releasio
 
 # Using pipx
-pipx install py-release
+pipx install releasio
 ```
 
 ## Quick Start
 
 ```bash
 # 1. Check what would happen
-py-release check
+releasio check
 
 # 2. Create a release PR (recommended workflow)
-py-release release-pr
+releasio release-pr
 
 # 3. After merging the PR, perform the release
-py-release release
+releasio release
 ```
 
-That's it! py-release handles version bumping, changelog generation, git tagging, PyPI publishing, and GitHub release creation.
+That's it! releasio handles version bumping, changelog generation, git tagging, PyPI publishing, and GitHub release creation.
 
 ## CLI Commands
 
 | Command | Description |
 |---------|-------------|
-| `py-release check` | Preview what would happen during a release |
-| `py-release update` | Update version and changelog locally |
-| `py-release release-pr` | Create or update a release pull request |
-| `py-release release` | Tag, publish to PyPI, and create GitHub release |
-| `py-release check-pr` | Validate PR title follows conventional commits |
-| `py-release init` | Initialize py-release configuration |
+| `releasio check` | Preview what would happen during a release |
+| `releasio update` | Update version and changelog locally |
+| `releasio release-pr` | Create or update a release pull request |
+| `releasio release` | Tag, publish to PyPI, and create GitHub release |
+| `releasio check-pr` | Validate PR title follows conventional commits |
+| `releasio init` | Initialize releasio configuration |
 
 ### Common Options
 
 ```bash
-py-release update --execute              # Apply changes (default is dry-run)
-py-release update --version 2.0.0        # Force specific version
-py-release update --prerelease alpha     # Create pre-release (1.2.0a1)
-py-release release --skip-publish        # Skip PyPI publishing
-py-release check-pr --require-scope      # Require scope in PR title
+releasio update --execute              # Apply changes (default is dry-run)
+releasio update --version 2.0.0        # Force specific version
+releasio update --prerelease alpha     # Create pre-release (1.2.0a1)
+releasio release --skip-publish        # Skip PyPI publishing
+releasio check-pr --require-scope      # Require scope in PR title
 ```
 
 ## GitHub Actions
 
-py-release provides a GitHub Action for seamless CI/CD integration.
+releasio provides a GitHub Action for seamless CI/CD integration.
 
 ### Recommended Workflow
 
@@ -192,27 +192,27 @@ jobs:
 
 ## Configuration
 
-Configuration is optional. py-release works out of the box with sensible defaults.
+Configuration is optional. releasio works out of the box with sensible defaults.
 
 Add to `pyproject.toml` if you need to customize:
 
 ```toml
-[tool.py-release]
+[tool.releasio]
 default_branch = "main"
 tag_prefix = "v"
 
-[tool.py-release.commits]
+[tool.releasio.commits]
 types_minor = ["feat"]
 types_patch = ["fix", "perf", "docs"]
 
-[tool.py-release.changelog]
+[tool.releasio.changelog]
 use_github_prs = false  # Set to true for squash merge workflows
 
-[tool.py-release.github]
+[tool.releasio.github]
 release_pr_labels = ["release"]
 draft_releases = false
 
-[tool.py-release.publish]
+[tool.releasio.publish]
 tool = "uv"  # or "twine"
 trusted_publishing = true
 ```
@@ -222,31 +222,31 @@ trusted_publishing = true
 Automatically create pre-release versions based on the branch you're releasing from. This is useful for projects that maintain multiple release channels (e.g., stable, beta, alpha).
 
 ```toml
-[tool.py-release.branches.main]
+[tool.releasio.branches.main]
 match = "main"
 prerelease = false  # Stable releases from main
 
-[tool.py-release.branches.beta]
+[tool.releasio.branches.beta]
 match = "beta"
 prerelease = true
 prerelease_token = "beta"  # 1.2.0 → 1.2.0-beta.1
 
-[tool.py-release.branches.alpha]
+[tool.releasio.branches.alpha]
 match = "alpha"
 prerelease = true
 prerelease_token = "alpha"  # 1.2.0 → 1.2.0-alpha.1
 
-[tool.py-release.branches.release]
+[tool.releasio.branches.release]
 match = "release/*"  # Wildcard pattern
 prerelease = true
 prerelease_token = "rc"  # 1.2.0 → 1.2.0-rc.1
 ```
 
-When releasing from the `beta` branch, py-release will automatically detect it and append the pre-release token:
+When releasing from the `beta` branch, releasio will automatically detect it and append the pre-release token:
 
 ```bash
 $ git checkout beta
-$ py-release update --execute
+$ releasio update --execute
 Auto-detected pre-release channel beta from branch beta
 Updating from 1.1.0 to 1.2.0-beta.1
 ```
@@ -256,7 +256,7 @@ Updating from 1.1.0 to 1.2.0-beta.1
 Customize how your changelog entries are formatted with section headers, author attribution, and custom templates.
 
 ```toml
-[tool.py-release.changelog]
+[tool.releasio.changelog]
 enabled = true
 path = "CHANGELOG.md"
 show_authors = true       # Include author name: "- Add feature (@username)"
@@ -266,7 +266,7 @@ show_commit_hash = true   # Include commit hash: "- Add feature (abc1234)"
 commit_template = "{description} by @{author} ({hash})"
 
 # Customize section headers
-[tool.py-release.changelog.section_headers]
+[tool.releasio.changelog.section_headers]
 feat = "🚀 New Features"
 fix = "🐛 Bug Fixes"
 perf = "⚡ Performance"
@@ -289,7 +289,7 @@ Available template variables:
 Support non-conventional commit formats like Gitmoji, Angular, or your own custom patterns. Custom parsers are tried first, with conventional commits as a fallback.
 
 ```toml
-[tool.py-release.commits]
+[tool.releasio.commits]
 # Custom parsers for Gitmoji commits
 commit_parsers = [
     { pattern = "^:sparkles:\\s*(?P<description>.+)$", type = "feat", group = "✨ Features" },
@@ -314,23 +314,23 @@ Each parser supports:
 
 ### Native Changelog Fallback
 
-py-release can generate changelogs natively when git-cliff is not installed. This uses your `section_headers` and `commit_template` settings.
+releasio can generate changelogs natively when git-cliff is not installed. This uses your `section_headers` and `commit_template` settings.
 
 ```toml
-[tool.py-release.changelog]
+[tool.releasio.changelog]
 # Generate changelog natively if git-cliff unavailable (default: true)
 native_fallback = true
 
-# Auto-generate git-cliff config from py-release settings
+# Auto-generate git-cliff config from releasio settings
 generate_cliff_config = false
 ```
 
 ### Build Command Hook
 
-Customize the build command used during release. By default, py-release uses `uv build`, but you can specify any build command.
+Customize the build command used during release. By default, releasio uses `uv build`, but you can specify any build command.
 
 ```toml
-[tool.py-release.hooks]
+[tool.releasio.hooks]
 # Custom build command (replaces default uv build)
 build = "python -m build --sdist --wheel"
 
@@ -345,14 +345,14 @@ Available template variables:
 
 ### Version File Management
 
-By default, py-release updates the version in `pyproject.toml`. You can also update version strings in other files.
+By default, releasio updates the version in `pyproject.toml`. You can also update version strings in other files.
 
 #### Explicit Version Files
 
 Specify additional files that contain version strings:
 
 ```toml
-[tool.py-release.version]
+[tool.releasio.version]
 version_files = [
     "src/mypackage/__init__.py",      # __version__ = "1.0.0"
     "src/mypackage/__version__.py",   # __version__ = "1.0.0"
@@ -371,11 +371,11 @@ Supported patterns in Python files:
 Enable automatic detection of version files in your package:
 
 ```toml
-[tool.py-release.version]
+[tool.releasio.version]
 auto_detect_version_files = true
 ```
 
-When enabled, py-release automatically finds and updates version strings in:
+When enabled, releasio automatically finds and updates version strings in:
 
 - `src/<package>/__init__.py`
 - `src/<package>/__version__.py`
@@ -385,7 +385,7 @@ When enabled, py-release automatically finds and updates version strings in:
 
 ### Lock File Updates
 
-py-release automatically updates your lock file after bumping the version to keep dependencies in sync. This works with multiple package managers:
+releasio automatically updates your lock file after bumping the version to keep dependencies in sync. This works with multiple package managers:
 
 | Package Manager | Lock File      | Command                   |
 | --------------- | -------------- | ------------------------- |
@@ -402,7 +402,7 @@ The package manager is auto-detected based on:
 To disable lock file updates:
 
 ```toml
-[tool.py-release.version]
+[tool.releasio.version]
 update_lock_file = false
 ```
 
@@ -410,19 +410,19 @@ update_lock_file = false
 <summary><strong>Full Configuration Reference</strong></summary>
 
 ```toml
-[tool.py-release]
+[tool.releasio]
 default_branch = "main"          # Branch for releases
 allow_dirty = false              # Allow releases from dirty working directory
 tag_prefix = "v"                 # Git tag prefix (v1.0.0)
 changelog_path = "CHANGELOG.md"  # Path to changelog file
 
-[tool.py-release.version]
+[tool.releasio.version]
 initial_version = "0.1.0"        # Version for first release
 version_files = []               # Additional files to update version in
 auto_detect_version_files = false  # Auto-detect __init__.py, __version__.py, etc.
 update_lock_file = true          # Update uv.lock/poetry.lock/pdm.lock after bump
 
-[tool.py-release.commits]
+[tool.releasio.commits]
 types_minor = ["feat"]           # Commit types triggering minor bump
 types_patch = ["fix", "perf"]    # Commit types triggering patch bump
 breaking_pattern = "BREAKING[ -]CHANGE:"
@@ -430,7 +430,7 @@ skip_release_patterns = ["[skip release]", "[release skip]"]
 commit_parsers = []              # Custom parsers for non-conventional commits
 use_conventional_fallback = true # Fall back to conventional if no parser matches
 
-[tool.py-release.changelog]
+[tool.releasio.changelog]
 enabled = true
 path = "CHANGELOG.md"
 use_github_prs = false           # Use PR-based changelog (for squash merges)
@@ -440,26 +440,26 @@ commit_template = ""             # Custom template: "{description} by @{author}"
 native_fallback = true           # Generate natively if git-cliff unavailable
 generate_cliff_config = false    # Auto-generate git-cliff config
 
-[tool.py-release.changelog.section_headers]
+[tool.releasio.changelog.section_headers]
 feat = "✨ Features"
 fix = "🐛 Bug Fixes"
 breaking = "⚠️ Breaking Changes"
 
-[tool.py-release.github]
+[tool.releasio.github]
 owner = ""                       # Auto-detected from git remote
 repo = ""                        # Auto-detected from git remote
 api_url = "https://api.github.com"
-release_pr_branch = "py-release/release"
+release_pr_branch = "releasio/release"
 release_pr_labels = ["release"]
 draft_releases = false
 
-[tool.py-release.publish]
+[tool.releasio.publish]
 enabled = true
 registry = "https://upload.pypi.org/legacy/"
 tool = "uv"
 trusted_publishing = true
 
-[tool.py-release.hooks]
+[tool.releasio.hooks]
 pre_bump = []                    # Commands before version bump
 post_bump = []                   # Commands after version bump
 pre_release = []                 # Commands before release
@@ -467,11 +467,11 @@ post_release = []                # Commands after release
 build = ""                       # Custom build command (replaces uv build)
 
 # Multi-branch release channels (optional)
-[tool.py-release.branches.main]
+[tool.releasio.branches.main]
 match = "main"
 prerelease = false
 
-[tool.py-release.branches.beta]
+[tool.releasio.branches.beta]
 match = "beta"
 prerelease = true
 prerelease_token = "beta"

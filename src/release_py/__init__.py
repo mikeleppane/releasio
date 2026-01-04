@@ -1,4 +1,4 @@
-"""release-py: Best-in-class Python release automation."""
+"""releasio: Best-in-class Python release automation."""
 
 from __future__ import annotations
 

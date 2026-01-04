@@ -1,5 +1,5 @@
 name: Performance Issue
-description: Report a performance problem with py-release
+description: Report a performance problem with releasio
 title: "[Performance]: "
 labels: ["performance", "triage"]
 body:
@@ -12,7 +12,7 @@ body:
     id: area
     attributes:
       label: Affected Area
-      description: Which part of py-release is experiencing performance issues?
+      description: Which part of releasio is experiencing performance issues?
       options:
         - Version calculation (analyzing commits)
         - Changelog generation
@@ -30,7 +30,7 @@ body:
       label: Problem Description
       description: Describe the performance issue you're experiencing.
       placeholder: |
-        The `py-release update` command takes 30+ seconds to complete...
+        The `releasio update` command takes 30+ seconds to complete...
         Changelog generation is very slow when there are many commits...
     validations:
       required: true
@@ -71,9 +71,9 @@ body:
       required: true
 
   - type: input
-    id: py-release-version
+    id: releasio-version
     attributes:
-      label: py-release Version
+      label: releasio Version
       placeholder: "0.1.0"
     validations:
       required: true
@@ -82,7 +82,7 @@ body:
     id: config
     attributes:
       label: Configuration
-      description: Your `[tool.py-release]` configuration if relevant.
+      description: Your `[tool.releasio]` configuration if relevant.
       render: toml
 
   - type: textarea

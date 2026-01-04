@@ -1,4 +1,4 @@
-"""Configuration management for release-py."""
+"""Configuration management for releasio."""
 
 from __future__ import annotations
 

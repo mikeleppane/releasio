@@ -1,5 +1,5 @@
 [project]
-name = "py-release"
+name = "releasio"
 version = "0.1.0"
 description = "Best-in-class Python release automation, inspired by release-plz"
 readme = "README.md"
@@ -44,7 +44,7 @@ dev = [
 ]
 
 [project.scripts]
-py-release = "release_py.cli.app:app"
+releasio = "release_py.cli.app:app"
 
 [project.urls]
 Homepage = "https://github.com/mikeleppane/release-py"
@@ -158,19 +158,19 @@ exclude_lines = [
     "@abstractmethod",
 ]
 
-[tool.py-release]
+[tool.releasio]
 default_branch = "main"
 tag_prefix = "v"
 changelog_path = "CHANGELOG.md"
 
-[tool.py-release.commits]
+[tool.releasio.commits]
 types_minor = ["feat"]
 types_patch = ["fix", "perf", "docs", "refactor", "style", "test", "build", "ci"]
 
-[tool.py-release.github]
-release_pr_branch = "py-release/release"
+[tool.releasio.github]
+release_pr_branch = "releasio/release"
 release_pr_labels = ["release"]
 
-[tool.py-release.publish]
+[tool.releasio.publish]
 registry = "https://upload.pypi.org/legacy/"
 tool = "uv"

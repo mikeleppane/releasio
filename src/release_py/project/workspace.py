@@ -39,7 +39,7 @@ def detect_workspace(
 ) -> list[WorkspacePackage]:
     """Detect packages in a workspace.
 
-    Uses configuration from [tool.py-release.packages] if available,
+    Uses configuration from [tool.releasio.packages] if available,
     otherwise attempts auto-detection.
 
     Args:

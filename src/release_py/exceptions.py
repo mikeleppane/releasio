@@ -1,14 +1,14 @@
-"""Exception hierarchy for release-py.
+"""Exception hierarchy for releasio.
 
 All exceptions inherit from ReleasePyError, allowing callers to catch
-all release-py errors with a single except clause if desired.
+all releasio errors with a single except clause if desired.
 """
 
 from __future__ import annotations
 
 
 class ReleasePyError(Exception):
-    """Base exception for all release-py errors."""
+    """Base exception for all releasio errors."""
 
     def __init__(self, message: str) -> None:
         self.message = message

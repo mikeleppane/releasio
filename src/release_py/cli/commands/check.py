@@ -110,7 +110,7 @@ def run_check(
                 Panel(
                     "[yellow]No releasable changes found.[/]\n\n"
                     "Only non-release commit types (docs, chore, etc.) since last release.\n"
-                    "Use [cyan]release-py update --version X.Y.Z[/] to force a specific version.",
+                    "Use [cyan]releasio update --version X.Y.Z[/] to force a specific version.",
                     title="No Changes",
                     border_style="yellow",
                 )
@@ -178,4 +178,4 @@ def run_check(
             console.print(f"  • [cyan]{vf}[/] (version update)")
 
     console.print()
-    console.print("[dim]Run [cyan]release-py update --execute[/] to apply these changes.[/]")
+    console.print("[dim]Run [cyan]releasio update --execute[/] to apply these changes.[/]")

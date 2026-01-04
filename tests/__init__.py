@@ -1,1 +1,1 @@
-"""Tests for py-release."""
+"""Tests for releasio."""

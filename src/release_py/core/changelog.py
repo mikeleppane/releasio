@@ -91,7 +91,7 @@ def get_bump_from_git_cliff(
     except FileNotFoundError as e:
         raise ChangelogError(
             "git-cliff not found. This may indicate a broken installation. "
-            "Try reinstalling: pip install --force-reinstall py-release"
+            "Try reinstalling: pip install --force-reinstall releasio"
         ) from e
 
 
@@ -141,7 +141,7 @@ def generate_changelog(
     except FileNotFoundError as e:
         raise ChangelogError(
             "git-cliff not found. This may indicate a broken installation. "
-            "Try reinstalling: pip install --force-reinstall py-release"
+            "Try reinstalling: pip install --force-reinstall releasio"
         ) from e
 
 
@@ -424,14 +424,14 @@ def generate_cliff_config(
     *,
     output_format: str = "toml",
 ) -> str:
-    """Generate git-cliff configuration from py-release settings.
+    """Generate git-cliff configuration from releasio settings.
 
-    Maps py-release section_headers and commit_parsers to git-cliff format.
-    This allows users to use py-release config as the single source of truth
+    Maps releasio section_headers and commit_parsers to git-cliff format.
+    This allows users to use releasio config as the single source of truth
     while still leveraging git-cliff's powerful features.
 
     Args:
-        config: The py-release configuration
+        config: The releasio configuration
         output_format: Output format ("toml" only currently supported)
 
     Returns:
@@ -452,8 +452,8 @@ def generate_cliff_config(
 
     # Header comment
     lines.append("# git-cliff configuration")
-    lines.append("# Auto-generated from py-release settings")
-    lines.append("# Do not edit manually if using py-release config generation")
+    lines.append("# Auto-generated from releasio settings")
+    lines.append("# Do not edit manually if using releasio config generation")
     lines.append("")
 
     # [changelog] section

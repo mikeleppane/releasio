@@ -1,4 +1,4 @@
-"""Core business logic for release-py.
+"""Core business logic for releasio.
 
 This module contains the fundamental building blocks:
 - Version parsing and manipulation (PEP 440 compliant)

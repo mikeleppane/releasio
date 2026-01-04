@@ -109,7 +109,7 @@ def breaking_commit() -> Commit:
 
 @pytest.fixture
 def default_config() -> ReleasePyConfig:
-    """Default py-release configuration."""
+    """Default releasio configuration."""
     return ReleasePyConfig()
 
 
@@ -178,7 +178,7 @@ requires-python = ">=3.11"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.py-release]
+[tool.releasio]
 default_branch = "main"
 tag_prefix = "v"
 """

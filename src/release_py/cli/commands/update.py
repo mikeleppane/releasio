@@ -282,7 +282,7 @@ def run_update(
             "  1. Review the changes\n"
             f"  2. Commit: [cyan]git add . && git commit -m "
             f"'chore(release): prepare {next_version}'[/]\n"
-            "  3. Release: [cyan]py-release release[/]",
+            "  3. Release: [cyan]releasio release[/]",
             title="[green]Update Complete[/]",
             border_style="green",
         )

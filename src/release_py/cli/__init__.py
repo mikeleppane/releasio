@@ -1,4 +1,4 @@
-"""Command-line interface for release-py.
+"""Command-line interface for releasio.
 
 This module provides the Typer-based CLI with commands for:
 - check: Preview what would happen (dry-run)

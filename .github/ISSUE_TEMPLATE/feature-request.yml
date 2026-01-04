@@ -1,5 +1,5 @@
 name: Feature Request
-description: Suggest a new feature or enhancement for py-release
+description: Suggest a new feature or enhancement for releasio
 title: "[Feature]: "
 labels: ["enhancement", "triage"]
 body:
@@ -14,7 +14,7 @@ body:
       label: Problem Statement
       description: What problem does this feature solve? What challenge are you facing?
       placeholder: |
-        Currently, py-release doesn't support... which makes it difficult to...
+        Currently, releasio doesn't support... which makes it difficult to...
         I'm frustrated when I have to...
     validations:
       required: true
@@ -24,7 +24,7 @@ body:
     attributes:
       label: Proposed Solution
       description: Describe the feature you'd like to see implemented.
-      placeholder: "I would like py-release to..."
+      placeholder: "I would like releasio to..."
     validations:
       required: true
 
@@ -36,7 +36,7 @@ body:
       options:
         - Nice to have - Would improve my workflow
         - Important - Significantly impacts my use case
-        - Critical - Blocking my adoption of py-release
+        - Critical - Blocking my adoption of releasio
     validations:
       required: true
 
@@ -48,11 +48,11 @@ body:
       render: toml
       placeholder: |
         # Example configuration
-        [tool.py-release]
+        [tool.releasio]
         new_feature = true
 
         # Or CLI usage
-        py-release update --new-flag
+        releasio update --new-flag
 
   - type: textarea
     id: alternatives
