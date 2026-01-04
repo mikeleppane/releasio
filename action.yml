@@ -1,4 +1,4 @@
-name: 'releasio'
+name: 'releasio-action'
 description: 'Automated releases for Python projects - handles versioning, changelogs, and publishing'
 author: 'Mikko Leppanen'
 
