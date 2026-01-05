@@ -62,10 +62,11 @@ jobs:
         uses: ./
         with:
           command: ${{ inputs.command }}
+          # For release-pr/release: dry-run controls execution
+          # For do-release: execute controls execution
+          dry-run: ${{ inputs.execute == false }}
           execute: ${{ inputs.execute }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          # PyPI token only needed if not using trusted publishing
-          # pypi-token: ${{ secrets.PYPI_TOKEN }}
 
   # Release when release PR is merged (detected by release commit message)
   auto-release:

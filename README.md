@@ -152,7 +152,7 @@ Options to run CI on release PRs:
 - **Use a Personal Access Token (PAT)** instead of `GITHUB_TOKEN` - store it as `secrets.RELEASE_TOKEN` and pass it via `github-token` input
 - **Push to the release branch** to trigger CI
 
-### Recommended Workflow
+### Minimal Workflow
 
 Create `.github/workflows/release.yml`:
 
@@ -162,9 +162,6 @@ name: Release
 on:
   push:
     branches: [main]
-  pull_request:
-    types: [closed]
-    branches: [main]
 
 permissions:
   contents: write
@@ -172,46 +169,139 @@ permissions:
   id-token: write  # For PyPI trusted publishing
 
 jobs:
-  # Create/update release PR on every push to main
+  # Create release PR on push (skip release commits to avoid loops)
   release-pr:
-    if: github.event_name == 'push'
+    if: "!startsWith(github.event.head_commit.message, 'chore(release):')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: mikeleppane/release-py@v1
+      - uses: mikeleppane/releasio@v2
         with:
           command: release-pr
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-  # Perform release when release PR is merged
+  # Auto-release when release PR is merged (detected by commit message)
   release:
-    if: |
-      github.event_name == 'pull_request' &&
-      github.event.pull_request.merged == true &&
-      contains(github.event.pull_request.labels.*.name, 'release')
+    if: startsWith(github.event.head_commit.message, 'chore(release):')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: mikeleppane/release-py@v1
+      - uses: mikeleppane/releasio@v2
         with:
           command: release
-        # PyPI trusted publishing - no token needed!
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+This workflow:
+1. Creates a release PR on every push to main (except release commits)
+2. Automatically releases when the release PR is merged (detected by `chore(release):` commit message)
+
+### Extended Workflow
+
+For manual control and more options:
+
+```yaml
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      command:
+        description: 'Command to run'
+        type: choice
+        options: [check, release-pr, release, do-release]
+        default: check
+      execute:
+        description: 'Execute (not dry-run)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  release-pr:
+    if: |
+      github.event_name == 'push' &&
+      !startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: mikeleppane/releasio@v2
+        with:
+          command: release-pr
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  auto-release:
+    if: |
+      github.event_name == 'push' &&
+      startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: mikeleppane/releasio@v2
+        with:
+          command: release
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # pypi-token: ${{ secrets.PYPI_TOKEN }}  # Only if not using trusted publishing
+
+  manual:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: mikeleppane/releasio@v2
+        with:
+          command: ${{ inputs.command }}
+          execute: ${{ inputs.execute }}
+          dry-run: ${{ inputs.execute == false }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ### Action Inputs
 
 | Input | Description | Default |
 |-------|-------------|---------|
-| `command` | Command: `release-pr`, `release`, `check`, `check-pr` | *required* |
+| `command` | Command to run (see below) | *required* |
 | `github-token` | GitHub token for API access | `github.token` |
-| `python-version` | Python version to use | `3.11` |
-| `dry-run` | Run without making changes | `false` |
+| `pypi-token` | PyPI token (if not using trusted publishing) | - |
+| `python-version` | Python version (3.11, 3.12, 3.13) | `3.11` |
+| `working-directory` | Project directory | `.` |
+| `dry-run` | Dry-run mode for `release-pr`/`release` | `false` |
+| `execute` | Execute mode for `do-release`/`update` | `false` |
 | `skip-publish` | Skip PyPI publishing | `false` |
+| `prerelease` | Pre-release type (alpha, beta, rc) | - |
+| `version-override` | Force specific version | - |
+
+**Commands:**
+
+| Command | Description |
+|---------|-------------|
+| `release-pr` | Create/update a release pull request |
+| `release` | Tag, publish to PyPI, create GitHub release |
+| `do-release` | Full workflow: update → commit → tag → publish |
+| `check` | Preview what would happen (always dry-run) |
+| `check-pr` | Validate PR title follows conventional commits |
+| `update` | Update version and changelog locally |
 
 ### Action Outputs
 
@@ -222,6 +312,7 @@ jobs:
 | `pr-url` | Created/updated PR URL |
 | `release-url` | GitHub release URL |
 | `tag` | Git tag created |
+| `valid` | Whether PR title is valid (check-pr only) |
 
 ## Required Credentials
 
