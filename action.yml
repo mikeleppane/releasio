@@ -122,6 +122,12 @@ runs:
       with:
         enable-cache: true
 
+    - name: Install git-cliff
+      shell: bash
+      run: |
+        echo "Installing git-cliff..."
+        uv tool install git-cliff
+
     - name: Install releasio
       shell: bash
       run: |
