@@ -142,6 +142,16 @@ Before using releasio in GitHub Actions, enable this setting:
 
 This allows the `GITHUB_TOKEN` to create release PRs.
 
+### CI on Release PRs
+
+**Note:** PRs created by `github-actions[bot]` using `GITHUB_TOKEN` won't automatically trigger CI workflows (this is a GitHub security feature to prevent infinite loops).
+
+Options to run CI on release PRs:
+
+- **Manually trigger CI** via the Actions tab
+- **Use a Personal Access Token (PAT)** instead of `GITHUB_TOKEN` - store it as `secrets.RELEASE_TOKEN` and pass it via `github-token` input
+- **Push to the release branch** to trigger CI
+
 ### Recommended Workflow
 
 Create `.github/workflows/release.yml`:
