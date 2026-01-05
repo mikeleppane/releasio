@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import subprocess
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -15,6 +16,12 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 runner = CliRunner()
+
+
+def strip_ansi(text: str) -> str:
+    """Strip ANSI escape codes from text."""
+    ansi_pattern = re.compile(r"\x1b\[[0-9;]*m")
+    return ansi_pattern.sub("", text)
 
 
 @pytest.fixture
@@ -446,7 +453,8 @@ class TestDoReleaseHelp:
         result = runner.invoke(app, ["do-release", "--help"])
 
         assert result.exit_code == 0
-        assert "--execute" in result.stdout
-        assert "--skip-publish" in result.stdout
-        assert "--version" in result.stdout
-        assert "--prerelease" in result.stdout
+        output = strip_ansi(result.stdout)
+        assert "--execute" in output
+        assert "--skip-publish" in output
+        assert "--version" in output
+        assert "--prerelease" in output

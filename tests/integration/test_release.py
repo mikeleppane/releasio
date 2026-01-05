@@ -308,9 +308,7 @@ class TestReleaseBodyGeneration:
             mock_client.get_merged_prs_between_tags = AsyncMock(
                 return_value=[{"number": 1, "author": "user1"}, {"number": 2, "author": "user2"}]
             )
-            mock_client.get_contributors_from_prs = AsyncMock(
-                return_value=["user1", "user2"]
-            )
+            mock_client.get_contributors_from_prs = AsyncMock(return_value=["user1", "user2"])
             mock_client.create_release = AsyncMock(
                 return_value=MagicMock(
                     tag="v1.0.0",
@@ -344,9 +342,7 @@ class TestReleaseBodyGeneration:
 
         # Add a conventional commit
         (release_ready_repo / "feature.py").write_text("# Feature\n")
-        subprocess.run(
-            ["git", "add", "."], cwd=release_ready_repo, check=True, capture_output=True
-        )
+        subprocess.run(["git", "add", "."], cwd=release_ready_repo, check=True, capture_output=True)
         subprocess.run(
             ["git", "commit", "-m", "feat: add new feature"],
             cwd=release_ready_repo,
@@ -396,9 +392,7 @@ class TestReleaseBodyGeneration:
 
         # Add commits from different contributors
         (release_ready_repo / "feature1.py").write_text("# Feature 1\n")
-        subprocess.run(
-            ["git", "add", "."], cwd=release_ready_repo, check=True, capture_output=True
-        )
+        subprocess.run(["git", "add", "."], cwd=release_ready_repo, check=True, capture_output=True)
         subprocess.run(
             ["git", "config", "user.name", "Alice"],
             cwd=release_ready_repo,
@@ -413,9 +407,7 @@ class TestReleaseBodyGeneration:
         )
 
         (release_ready_repo / "feature2.py").write_text("# Feature 2\n")
-        subprocess.run(
-            ["git", "add", "."], cwd=release_ready_repo, check=True, capture_output=True
-        )
+        subprocess.run(["git", "add", "."], cwd=release_ready_repo, check=True, capture_output=True)
         subprocess.run(
             ["git", "config", "user.name", "Bob"],
             cwd=release_ready_repo,
@@ -456,9 +448,9 @@ class TestReleaseBodyGeneration:
                                 call_kwargs = mock_client.create_release.call_args.kwargs
                                 body = call_kwargs.get("body", "")
                                 # Should contain Contributors section or installation instructions
-                                assert (
-                                    "Contributors" in body or "Installation" in body
-                                ), f"Release body missing expected sections: {body}"
+                                assert "Contributors" in body or "Installation" in body, (
+                                    f"Release body missing expected sections: {body}"
+                                )
 
     def test_release_github_api_failure_shows_error(self, release_ready_repo: Path):
         """Release shows clear error when GitHub API fails."""
@@ -493,8 +485,10 @@ class TestReleaseBodyGeneration:
 
                             # Should fail with error message
                             assert result.exit_code == 1
-                            output = result.stdout + (result.output if hasattr(result, "output") else "")
+                            output = result.stdout + (
+                                result.output if hasattr(result, "output") else ""
+                            )
                             # Error message should mention the GitHub error
-                            assert (
-                                "error" in output.lower() or "github" in output.lower()
-                            ), f"Expected error message about GitHub, got: {output}"
+                            assert "error" in output.lower() or "github" in output.lower(), (
+                                f"Expected error message about GitHub, got: {output}"
+                            )

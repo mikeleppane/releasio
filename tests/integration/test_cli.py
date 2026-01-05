@@ -133,9 +133,7 @@ class TestCLICheck:
         pyproject.write_text('[project]\nname = "test"\nversion = "1.0.0"\n')
 
         # Create tag for version 1.0.0
-        subprocess.run(
-            ["git", "tag", "v1.0.0"], cwd=temp_git_repo, check=True, capture_output=True
-        )
+        subprocess.run(["git", "tag", "v1.0.0"], cwd=temp_git_repo, check=True, capture_output=True)
 
         # Add a minor bump commit
         (temp_git_repo / "feature.txt").write_text("new feature")

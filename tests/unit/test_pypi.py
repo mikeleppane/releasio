@@ -486,8 +486,7 @@ class TestPublishWithPoetry:
         with patch("shutil.which", return_value="/usr/bin/poetry"):
             with patch("subprocess.run") as mock_run:
                 mock_run.side_effect = subprocess.CalledProcessError(
-                    1, "poetry publish",
-                    stderr="Authentication credentials were not provided"
+                    1, "poetry publish", stderr="Authentication credentials were not provided"
                 )
 
                 with pytest.raises(PublishError, match="Poetry authentication failed"):
@@ -566,8 +565,7 @@ class TestPublishWithPDM:
         with patch("shutil.which", return_value="/usr/bin/pdm"):
             with patch("subprocess.run") as mock_run:
                 mock_run.side_effect = subprocess.CalledProcessError(
-                    1, "pdm publish",
-                    stderr="401 Unauthorized - authentication required"
+                    1, "pdm publish", stderr="401 Unauthorized - authentication required"
                 )
 
                 with pytest.raises(PublishError, match="PDM authentication failed"):
