@@ -474,6 +474,25 @@ class TestPublishWithPoetry:
                 with pytest.raises(UploadError, match="already been published"):
                     publish_package(tmp_path, config, dist_files=[whl])
 
+    def test_publish_poetry_authentication_error(self, tmp_path: Path):
+        """Poetry publish fails with helpful message on auth error."""
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        whl = dist_dir / "package-1.0.0.whl"
+        whl.touch()
+
+        config = PublishConfig(enabled=True, tool="poetry")
+
+        with patch("shutil.which", return_value="/usr/bin/poetry"):
+            with patch("subprocess.run") as mock_run:
+                mock_run.side_effect = subprocess.CalledProcessError(
+                    1, "poetry publish",
+                    stderr="Authentication credentials were not provided"
+                )
+
+                with pytest.raises(PublishError, match="Poetry authentication failed"):
+                    publish_package(tmp_path, config, dist_files=[whl])
+
 
 class TestPublishWithPDM:
     """Tests for publishing with PDM."""
@@ -534,3 +553,80 @@ class TestPublishWithPDM:
         with patch("shutil.which", return_value=None):
             with pytest.raises(PublishError, match="pdm not found"):
                 publish_package(tmp_path, config, dist_files=[whl])
+
+    def test_publish_pdm_authentication_error(self, tmp_path: Path):
+        """PDM publish fails with helpful message on auth error."""
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        whl = dist_dir / "package-1.0.0.whl"
+        whl.touch()
+
+        config = PublishConfig(enabled=True, tool="pdm")
+
+        with patch("shutil.which", return_value="/usr/bin/pdm"):
+            with patch("subprocess.run") as mock_run:
+                mock_run.side_effect = subprocess.CalledProcessError(
+                    1, "pdm publish",
+                    stderr="401 Unauthorized - authentication required"
+                )
+
+                with pytest.raises(PublishError, match="PDM authentication failed"):
+                    publish_package(tmp_path, config, dist_files=[whl])
+
+
+class TestBuildCustomCommand:
+    """Tests for custom build commands."""
+
+    def test_build_with_custom_command_version_substitution(self, tmp_path: Path):
+        """Custom build command with {version} variable substitution."""
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        (dist_dir / "package-1.0.0.whl").touch()
+
+        custom_cmd = "echo Building version {version} && mkdir -p dist"
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+
+            build_package(
+                tmp_path,
+                clean=False,
+                custom_command=custom_cmd,
+                version="1.0.0",
+            )
+
+            # Verify command substitution
+            called_cmd = mock_run.call_args[0][0]
+            assert "1.0.0" in called_cmd
+            assert "{version}" not in called_cmd
+            # Verify it was called with shell=True
+            assert mock_run.call_args[1]["shell"] is True
+
+    def test_build_with_custom_command_path_substitution(self, tmp_path: Path):
+        """Custom build command with {project_path} variable substitution."""
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        (dist_dir / "package-1.0.0.whl").touch()
+
+        custom_cmd = "cd {project_path} && make build"
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+
+            build_package(tmp_path, clean=False, custom_command=custom_cmd)
+
+            called_cmd = mock_run.call_args[0][0]
+            assert str(tmp_path) in called_cmd
+            assert "{project_path}" not in called_cmd
+
+    def test_build_custom_command_failure_raises(self, tmp_path: Path):
+        """Custom build command failure raises BuildError."""
+        custom_cmd = "exit 1"
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.side_effect = subprocess.CalledProcessError(
+                1, custom_cmd, stderr="Build failed"
+            )
+
+            with pytest.raises(BuildError, match="Custom build command failed"):
+                build_package(tmp_path, custom_command=custom_cmd)

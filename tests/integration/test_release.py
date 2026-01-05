@@ -277,3 +277,224 @@ class TestReleasePublishing:
 
                         if result.exit_code == 0:
                             mock_publish.assert_called_once()
+
+
+class TestReleaseBodyGeneration:
+    """Tests for release body generation and changelog integration."""
+
+    def test_release_with_pr_based_changelog(self, release_ready_repo: Path):
+        """Release with PR-based changelog fetches PRs from GitHub."""
+        # Add PR-based config to pyproject.toml
+        pyproject = release_ready_repo / "pyproject.toml"
+        config_content = pyproject.read_text()
+        config_content += "\n[tool.releasio.changelog]\nuse_github_prs = true\n"
+        pyproject.write_text(config_content)
+
+        # Rename to main branch
+        subprocess.run(
+            ["git", "branch", "-m", "master", "main"],
+            cwd=release_ready_repo,
+            check=True,
+            capture_output=True,
+        )
+
+        with patch("release_py.forge.github.GitHubClient") as mock_github:
+            mock_client = MagicMock()
+
+            # Mock PR-based changelog methods
+            mock_client.generate_pr_based_changelog = AsyncMock(
+                return_value="## Changes\n\n- feat: New feature (#1)\n- fix: Bug fix (#2)"
+            )
+            mock_client.get_merged_prs_between_tags = AsyncMock(
+                return_value=[{"number": 1, "author": "user1"}, {"number": 2, "author": "user2"}]
+            )
+            mock_client.get_contributors_from_prs = AsyncMock(
+                return_value=["user1", "user2"]
+            )
+            mock_client.create_release = AsyncMock(
+                return_value=MagicMock(
+                    tag="v1.0.0",
+                    url="https://github.com/owner/repo/releases/tag/v1.0.0",
+                )
+            )
+            mock_github.return_value = mock_client
+
+            with patch("release_py.publish.pypi.build_package", return_value=[]):
+                with patch("release_py.publish.pypi.publish_package"):
+                    with patch("release_py.vcs.git.GitRepository.push_tag"):
+                        result = runner.invoke(
+                            app, ["release", str(release_ready_repo), "--execute"]
+                        )
+
+                        if result.exit_code == 0:
+                            # Verify PR-based methods were called
+                            mock_client.generate_pr_based_changelog.assert_called_once()
+                            mock_client.get_merged_prs_between_tags.assert_called_once()
+                            mock_client.get_contributors_from_prs.assert_called_once()
+
+    def test_release_with_commit_based_changelog(self, release_ready_repo: Path):
+        """Release with commit-based changelog uses git-cliff."""
+        # Rename to main branch
+        subprocess.run(
+            ["git", "branch", "-m", "master", "main"],
+            cwd=release_ready_repo,
+            check=True,
+            capture_output=True,
+        )
+
+        # Add a conventional commit
+        (release_ready_repo / "feature.py").write_text("# Feature\n")
+        subprocess.run(
+            ["git", "add", "."], cwd=release_ready_repo, check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "feat: add new feature"],
+            cwd=release_ready_repo,
+            check=True,
+            capture_output=True,
+        )
+
+        with patch("release_py.forge.github.GitHubClient") as mock_github:
+            mock_client = MagicMock()
+            mock_client.create_release = AsyncMock(
+                return_value=MagicMock(
+                    tag="v1.0.0",
+                    url="https://github.com/owner/repo/releases/tag/v1.0.0",
+                )
+            )
+            mock_github.return_value = mock_client
+
+            # Mock changelog generation
+            with patch(
+                "release_py.core.changelog.generate_changelog",
+                return_value="## Features\n\n- add new feature",
+            ) as mock_changelog:
+                with patch("release_py.publish.pypi.build_package", return_value=[]):
+                    with patch("release_py.publish.pypi.publish_package"):
+                        with patch("release_py.vcs.git.GitRepository.push_tag"):
+                            result = runner.invoke(
+                                app, ["release", str(release_ready_repo), "--execute"]
+                            )
+
+                            if result.exit_code == 0:
+                                # Verify commit-based changelog was called
+                                mock_changelog.assert_called_once()
+                                # Verify release body contains changelog
+                                call_kwargs = mock_client.create_release.call_args.kwargs
+                                body = call_kwargs.get("body", "")
+                                assert "feature" in body.lower() or len(body) > 0
+
+    def test_release_body_includes_contributors(self, release_ready_repo: Path):
+        """Release body includes contributors section."""
+        # Rename to main branch
+        subprocess.run(
+            ["git", "branch", "-m", "master", "main"],
+            cwd=release_ready_repo,
+            check=True,
+            capture_output=True,
+        )
+
+        # Add commits from different contributors
+        (release_ready_repo / "feature1.py").write_text("# Feature 1\n")
+        subprocess.run(
+            ["git", "add", "."], cwd=release_ready_repo, check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "config", "user.name", "Alice"],
+            cwd=release_ready_repo,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "feat: feature 1"],
+            cwd=release_ready_repo,
+            check=True,
+            capture_output=True,
+        )
+
+        (release_ready_repo / "feature2.py").write_text("# Feature 2\n")
+        subprocess.run(
+            ["git", "add", "."], cwd=release_ready_repo, check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "config", "user.name", "Bob"],
+            cwd=release_ready_repo,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "feat: feature 2"],
+            cwd=release_ready_repo,
+            check=True,
+            capture_output=True,
+        )
+
+        with patch("release_py.forge.github.GitHubClient") as mock_github:
+            mock_client = MagicMock()
+            mock_client.create_release = AsyncMock(
+                return_value=MagicMock(
+                    tag="v1.0.0",
+                    url="https://github.com/owner/repo/releases/tag/v1.0.0",
+                )
+            )
+            mock_github.return_value = mock_client
+
+            # Mock changelog generation
+            with patch(
+                "release_py.core.changelog.generate_changelog",
+                return_value="## Features\n\n- feature 1\n- feature 2",
+            ):
+                with patch("release_py.publish.pypi.build_package", return_value=[]):
+                    with patch("release_py.publish.pypi.publish_package"):
+                        with patch("release_py.vcs.git.GitRepository.push_tag"):
+                            result = runner.invoke(
+                                app, ["release", str(release_ready_repo), "--execute"]
+                            )
+
+                            if result.exit_code == 0:
+                                # Check that release body includes contributors
+                                call_kwargs = mock_client.create_release.call_args.kwargs
+                                body = call_kwargs.get("body", "")
+                                # Should contain Contributors section or installation instructions
+                                assert (
+                                    "Contributors" in body or "Installation" in body
+                                ), f"Release body missing expected sections: {body}"
+
+    def test_release_github_api_failure_shows_error(self, release_ready_repo: Path):
+        """Release shows clear error when GitHub API fails."""
+        # Rename to main branch
+        subprocess.run(
+            ["git", "branch", "-m", "master", "main"],
+            cwd=release_ready_repo,
+            check=True,
+            capture_output=True,
+        )
+
+        with patch("release_py.forge.github.GitHubClient") as mock_github:
+            mock_client = MagicMock()
+            # Simulate GitHub API failure
+            mock_client.create_release = AsyncMock(
+                side_effect=Exception("GitHub API rate limit exceeded")
+            )
+            mock_github.return_value = mock_client
+
+            # Mock changelog generation
+            with patch(
+                "release_py.core.changelog.generate_changelog",
+                return_value="## Changes",
+            ):
+                with patch("release_py.publish.pypi.build_package", return_value=[]):
+                    with patch("release_py.publish.pypi.publish_package"):
+                        # Don't mock push_tag to allow tag creation
+                        with patch("release_py.vcs.git.GitRepository.push_tag"):
+                            result = runner.invoke(
+                                app, ["release", str(release_ready_repo), "--execute"]
+                            )
+
+                            # Should fail with error message
+                            assert result.exit_code == 1
+                            output = result.stdout + (result.output if hasattr(result, "output") else "")
+                            # Error message should mention the GitHub error
+                            assert (
+                                "error" in output.lower() or "github" in output.lower()
+                            ), f"Expected error message about GitHub, got: {output}"

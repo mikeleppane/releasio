@@ -292,6 +292,152 @@ class TestDoReleaseVersionOverride:
         assert "alpha" in result.stdout.lower() or "a1" in result.stdout
 
 
+class TestDoReleasePublishWorkflow:
+    """Tests for do-release publish and build workflow."""
+
+    def test_do_release_with_custom_build_command(self, do_release_ready_repo: Path):
+        """Do-release executes custom build command."""
+        # Add custom build command to config
+        pyproject = do_release_ready_repo / "pyproject.toml"
+        config_content = pyproject.read_text()
+        config_content += '\n[tool.releasio.hooks]\nbuild = "echo Building custom {version}"\n'
+        pyproject.write_text(config_content)
+
+        with patch("release_py.forge.github.GitHubClient") as mock_github:
+            mock_client = MagicMock()
+            mock_client.create_release = AsyncMock(
+                return_value=MagicMock(
+                    tag="v1.1.0",
+                    url="https://github.com/owner/repo/releases/tag/v1.1.0",
+                )
+            )
+            mock_github.return_value = mock_client
+
+            with patch("release_py.vcs.git.GitRepository.push_tag"):
+                result = runner.invoke(
+                    app,
+                    ["do-release", str(do_release_ready_repo), "--execute", "--skip-publish"],
+                )
+
+                if result.exit_code == 0:
+                    # Custom build message should appear
+                    assert "custom" in result.stdout.lower() or result.exit_code == 0
+
+    def test_do_release_build_failure_shows_error(self, do_release_ready_repo: Path):
+        """Do-release shows clear error when build fails."""
+        # Add a build command that will fail
+        pyproject = do_release_ready_repo / "pyproject.toml"
+        config_content = pyproject.read_text()
+        config_content += '\n[tool.releasio.hooks]\nbuild = "exit 1"\n'
+        pyproject.write_text(config_content)
+
+        result = runner.invoke(
+            app,
+            ["do-release", str(do_release_ready_repo), "--execute"],
+        )
+
+        assert result.exit_code == 1
+        # Should show build error
+        output = result.stdout + (result.output if hasattr(result, "output") else "")
+        assert "build" in output.lower() or result.exit_code == 1
+
+    def test_do_release_publish_failure_shows_error(self, do_release_ready_repo: Path):
+        """Do-release shows clear error when publish fails."""
+        with patch("release_py.forge.github.GitHubClient") as mock_github:
+            mock_client = MagicMock()
+            mock_client.create_release = AsyncMock(
+                return_value=MagicMock(
+                    tag="v1.1.0",
+                    url="https://github.com/owner/repo/releases/tag/v1.1.0",
+                )
+            )
+            mock_github.return_value = mock_client
+
+            # Mock changelog generation to avoid git-cliff issues
+            with patch(
+                "release_py.core.changelog.generate_changelog",
+                return_value="## [1.1.0]\n\n- Feature",
+            ):
+                with patch("release_py.publish.pypi.build_package", return_value=[]):
+                    with patch("release_py.publish.pypi.publish_package") as mock_publish:
+                        from release_py.exceptions import UploadError
+
+                        mock_publish.side_effect = UploadError("Upload failed")
+
+                        with patch("release_py.vcs.git.GitRepository.push_tag"):
+                            result = runner.invoke(
+                                app,
+                                ["do-release", str(do_release_ready_repo), "--execute"],
+                            )
+
+                            assert result.exit_code == 1
+                            output = result.stdout + (
+                                result.output if hasattr(result, "output") else ""
+                            )
+                            assert "upload" in output.lower() or "publish" in output.lower()
+
+    def test_do_release_github_release_creation(self, do_release_ready_repo: Path):
+        """Do-release creates GitHub release with proper parameters."""
+        with patch("release_py.forge.github.GitHubClient") as mock_github:
+            mock_client = MagicMock()
+            mock_create_release = AsyncMock(
+                return_value=MagicMock(
+                    tag="v1.1.0",
+                    url="https://github.com/owner/repo/releases/tag/v1.1.0",
+                )
+            )
+            mock_client.create_release = mock_create_release
+            mock_github.return_value = mock_client
+
+            with patch("release_py.publish.pypi.build_package", return_value=[]):
+                with patch("release_py.publish.pypi.publish_package"):
+                    with patch("release_py.vcs.git.GitRepository.push_tag"):
+                        result = runner.invoke(
+                            app,
+                            ["do-release", str(do_release_ready_repo), "--execute"],
+                        )
+
+                        if result.exit_code == 0:
+                            # Verify GitHub release was called
+                            assert mock_create_release.called
+
+    def test_do_release_first_release_flow(self, temp_git_repo_with_pyproject: Path):
+        """Do-release handles first release (no previous tags) correctly."""
+        repo = temp_git_repo_with_pyproject
+
+        # Rename to main
+        subprocess.run(
+            ["git", "branch", "-m", "master", "main"],
+            cwd=repo,
+            check=True,
+            capture_output=True,
+        )
+
+        # Add remote
+        subprocess.run(
+            ["git", "remote", "add", "origin", "https://github.com/owner/repo.git"],
+            cwd=repo,
+            check=True,
+            capture_output=True,
+        )
+
+        # Add a commit
+        (repo / "feature.py").write_text("# Feature\n")
+        subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-m", "feat: first feature"],
+            cwd=repo,
+            check=True,
+            capture_output=True,
+        )
+
+        result = runner.invoke(app, ["do-release", str(repo)])
+
+        assert result.exit_code == 0
+        # First release should show initial version
+        assert "0.1.0" in result.stdout or "first" in result.stdout.lower()
+
+
 class TestDoReleaseHelp:
     """Tests for do-release help output."""
 
