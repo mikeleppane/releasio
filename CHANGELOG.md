@@ -1,3 +1,18 @@
+## [2.1.4] - 2026-01-05
+
+### 🐛 Bug Fixes
+
+- *(ci)* Skip release-pr job on release commits
+- *(publish)* Remove tokens from env when using OIDC trusted publishing
+
+### 📚 Documentation
+
+- Document CI limitation for release PRs created by GITHUB_TOKEN
+- Update GitHub Actions workflow documentation
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release)* Prepare v2.1.3 (#3)
 ## [2.1.3] - 2026-01-05
 
 ### 🐛 Bug Fixes
