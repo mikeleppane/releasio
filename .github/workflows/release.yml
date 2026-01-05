@@ -47,6 +47,7 @@ jobs:
           command: release-pr
           dry-run: 'false'
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          releasio-version: source
 
   # Manual release workflow
   manual-release:
@@ -67,6 +68,7 @@ jobs:
           dry-run: ${{ inputs.execute == false }}
           execute: ${{ inputs.execute }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          releasio-version: source
 
   # Release when release PR is merged (detected by release commit message)
   auto-release:
@@ -86,3 +88,4 @@ jobs:
           command: release
           dry-run: 'false'
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          releasio-version: source
