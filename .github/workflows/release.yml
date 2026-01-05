@@ -43,6 +43,7 @@ jobs:
         uses: ./
         with:
           command: release-pr
+          dry-run: 'false'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   # Manual release workflow
@@ -80,6 +81,5 @@ jobs:
         uses: ./
         with:
           command: release
+          dry-run: 'false'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          # PyPI token only needed if not using trusted publishing
-          # pypi-token: ${{ secrets.PYPI_TOKEN }}
