@@ -129,7 +129,7 @@ def run_release(
             if custom_build:
                 console.print(f"  • Building package (custom: [dim]{custom_build}[/])...")
             else:
-                console.print("  • Building package...")
+                console.print(f"  • Building package with {config.publish.tool}...")
 
             from release_py.publish.pypi import build_package
 
@@ -137,6 +137,7 @@ def run_release(
                 project_path,
                 custom_command=custom_build,
                 version=str(current_version),
+                tool=config.publish.tool,
             )
             console.print("  [green]✓[/] Built package")
 

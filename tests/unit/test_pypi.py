@@ -310,3 +310,227 @@ class TestCheckPypiVersionExists:
             result = check_pypi_version_exists("requests", "2.28.0")
 
             assert result is False
+
+
+class TestBuildPackageWithPoetry:
+    """Tests for building with Poetry."""
+
+    def test_build_with_poetry_when_configured(self, tmp_path: Path):
+        """Build package using poetry when tool=poetry."""
+        # Create poetry.lock to indicate Poetry project
+        (tmp_path / "poetry.lock").touch()
+
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        (dist_dir / "package-1.0.0.whl").touch()
+
+        with patch("shutil.which") as mock_which:
+            mock_which.return_value = "/usr/bin/poetry"
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value = MagicMock(returncode=0)
+
+                result = build_package(tmp_path, clean=False, tool="poetry")
+
+                assert len(result) == 1
+                mock_run.assert_called_once()
+                assert "poetry" in mock_run.call_args[0][0]
+                assert "build" in mock_run.call_args[0][0]
+
+    def test_build_poetry_missing_lock_file_raises(self, tmp_path: Path):
+        """Raise BuildError when poetry configured but poetry.lock missing."""
+        with patch("shutil.which", return_value="/usr/bin/poetry"):
+            with pytest.raises(BuildError, match=r"poetry\.lock not found"):
+                build_package(tmp_path, tool="poetry")
+
+    def test_build_poetry_falls_back_to_uv(self, tmp_path: Path):
+        """Fall back to uv when poetry not installed."""
+        (tmp_path / "poetry.lock").touch()
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        (dist_dir / "package-1.0.0.whl").touch()
+
+        def which_side_effect(cmd: str) -> str | None:
+            if cmd == "poetry":
+                return None
+            if cmd == "uv":
+                return "/usr/bin/uv"
+            return None
+
+        with patch("shutil.which", side_effect=which_side_effect):
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value = MagicMock(returncode=0)
+
+                result = build_package(tmp_path, clean=False, tool="poetry")
+
+                # Should fall back to uv
+                assert len(result) == 1
+                assert "uv" in mock_run.call_args[0][0]
+
+
+class TestBuildPackageWithPDM:
+    """Tests for building with PDM."""
+
+    def test_build_with_pdm_when_configured(self, tmp_path: Path):
+        """Build package using pdm when tool=pdm."""
+        (tmp_path / "pdm.lock").touch()
+
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        (dist_dir / "package-1.0.0.whl").touch()
+
+        with patch("shutil.which") as mock_which:
+            mock_which.return_value = "/usr/bin/pdm"
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value = MagicMock(returncode=0)
+
+                result = build_package(tmp_path, clean=False, tool="pdm")
+
+                assert len(result) == 1
+                mock_run.assert_called_once()
+                assert "pdm" in mock_run.call_args[0][0]
+                assert "build" in mock_run.call_args[0][0]
+
+    def test_build_pdm_missing_lock_file_raises(self, tmp_path: Path):
+        """Raise BuildError when pdm configured but pdm.lock missing."""
+        with patch("shutil.which", return_value="/usr/bin/pdm"):
+            with pytest.raises(BuildError, match=r"pdm\.lock not found"):
+                build_package(tmp_path, tool="pdm")
+
+
+class TestPublishWithPoetry:
+    """Tests for publishing with Poetry."""
+
+    def test_publish_with_poetry(self, tmp_path: Path):
+        """Publish using poetry."""
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        whl = dist_dir / "package-1.0.0.whl"
+        whl.touch()
+
+        config = PublishConfig(enabled=True, tool="poetry")
+
+        with patch("shutil.which", return_value="/usr/bin/poetry"):
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value = MagicMock(returncode=0)
+
+                publish_package(tmp_path, config, dist_files=[whl])
+
+                mock_run.assert_called_once()
+                call_args = mock_run.call_args[0][0]
+                assert "poetry" in call_args
+                assert "publish" in call_args
+
+    def test_publish_poetry_custom_registry(self, tmp_path: Path):
+        """Publish to custom registry with poetry."""
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        whl = dist_dir / "package-1.0.0.whl"
+        whl.touch()
+
+        config = PublishConfig(
+            enabled=True,
+            tool="poetry",
+            registry="https://test.pypi.org/legacy/",
+        )
+
+        with patch("shutil.which", return_value="/usr/bin/poetry"):
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value = MagicMock(returncode=0)
+
+                publish_package(tmp_path, config, dist_files=[whl])
+
+                call_args = mock_run.call_args[0][0]
+                assert "--repository" in call_args
+                assert "https://test.pypi.org/legacy/" in call_args
+
+    def test_publish_poetry_not_found_raises(self, tmp_path: Path):
+        """Raise PublishError when poetry not found."""
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        whl = dist_dir / "package-1.0.0.whl"
+        whl.touch()
+
+        config = PublishConfig(enabled=True, tool="poetry")
+
+        with patch("shutil.which", return_value=None):
+            with pytest.raises(PublishError, match="poetry not found"):
+                publish_package(tmp_path, config, dist_files=[whl])
+
+    def test_publish_poetry_already_published_raises(self, tmp_path: Path):
+        """Raise UploadError when version already published."""
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        whl = dist_dir / "package-1.0.0.whl"
+        whl.touch()
+
+        config = PublishConfig(enabled=True, tool="poetry")
+
+        with patch("shutil.which", return_value="/usr/bin/poetry"):
+            with patch("subprocess.run") as mock_run:
+                mock_run.side_effect = subprocess.CalledProcessError(
+                    1, "poetry publish", stderr="File already exists"
+                )
+
+                with pytest.raises(UploadError, match="already been published"):
+                    publish_package(tmp_path, config, dist_files=[whl])
+
+
+class TestPublishWithPDM:
+    """Tests for publishing with PDM."""
+
+    def test_publish_with_pdm(self, tmp_path: Path):
+        """Publish using pdm."""
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        whl = dist_dir / "package-1.0.0.whl"
+        whl.touch()
+
+        config = PublishConfig(enabled=True, tool="pdm")
+
+        with patch("shutil.which", return_value="/usr/bin/pdm"):
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value = MagicMock(returncode=0)
+
+                publish_package(tmp_path, config, dist_files=[whl])
+
+                mock_run.assert_called_once()
+                call_args = mock_run.call_args[0][0]
+                assert "pdm" in call_args
+                assert "publish" in call_args
+                assert "--no-build" in call_args
+
+    def test_publish_pdm_custom_registry(self, tmp_path: Path):
+        """Publish to custom registry with pdm."""
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        whl = dist_dir / "package-1.0.0.whl"
+        whl.touch()
+
+        config = PublishConfig(
+            enabled=True,
+            tool="pdm",
+            registry="https://test.pypi.org/legacy/",
+        )
+
+        with patch("shutil.which", return_value="/usr/bin/pdm"):
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value = MagicMock(returncode=0)
+
+                publish_package(tmp_path, config, dist_files=[whl])
+
+                call_args = mock_run.call_args[0][0]
+                assert "--repository" in call_args
+                assert "https://test.pypi.org/legacy/" in call_args
+
+    def test_publish_pdm_not_found_raises(self, tmp_path: Path):
+        """Raise PublishError when pdm not found."""
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        whl = dist_dir / "package-1.0.0.whl"
+        whl.touch()
+
+        config = PublishConfig(enabled=True, tool="pdm")
+
+        with patch("shutil.which", return_value=None):
+            with pytest.raises(PublishError, match="pdm not found"):
+                publish_package(tmp_path, config, dist_files=[whl])

@@ -329,9 +329,9 @@ class PublishConfig(BaseModel):
         default="https://upload.pypi.org/legacy/",
         description="PyPI registry URL",
     )
-    tool: Literal["uv", "twine"] = Field(
+    tool: Literal["uv", "poetry", "pdm", "twine"] = Field(
         default="uv",
-        description="Tool to use for publishing",
+        description="Tool to use for building and publishing",
     )
     trusted_publishing: bool = Field(
         default=True,

@@ -238,8 +238,40 @@ release_pr_labels = ["release"]
 draft_releases = false
 
 [tool.releasio.publish]
-tool = "uv"  # or "twine"
+tool = "uv"  # or "poetry", "pdm", "twine"
 trusted_publishing = true
+```
+
+### Using Poetry
+
+If your project uses Poetry, configure releasio to use it for building and publishing:
+
+```toml
+[tool.releasio.publish]
+tool = "poetry"
+```
+
+Configure authentication:
+
+```bash
+poetry config pypi-token.pypi your-token-here
+```
+
+### Using PDM
+
+If your project uses PDM, configure releasio to use it for building and publishing:
+
+```toml
+[tool.releasio.publish]
+tool = "pdm"
+```
+
+Configure authentication:
+
+```bash
+export PDM_PUBLISH_PASSWORD=your-token-here
+# or
+pdm config pypi.token your-token-here
 ```
 
 ### Multi-branch Release Channels
@@ -480,7 +512,7 @@ draft_releases = false
 [tool.releasio.publish]
 enabled = true
 registry = "https://upload.pypi.org/legacy/"
-tool = "uv"
+tool = "uv"                      # Options: "uv", "poetry", "pdm", "twine"
 trusted_publishing = true
 
 [tool.releasio.hooks]
