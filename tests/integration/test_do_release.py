@@ -458,5 +458,3 @@ class TestDoReleaseHelp:
         assert "--skip-publish" in output
         assert "--version" in output
         assert "--prerelease" in output
-
-

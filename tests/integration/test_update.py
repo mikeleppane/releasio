@@ -427,9 +427,7 @@ initial_version = "1.0.0"
 class TestGitHubRemoteWarning:
     """Tests for GitHub remote detection warning."""
 
-    def test_update_warns_when_github_remote_not_detected(
-        self, repo_with_feat_commit: Path
-    ):
+    def test_update_warns_when_github_remote_not_detected(self, repo_with_feat_commit: Path):
         """update shows warning when GitHub remote cannot be detected."""
         # Remove the remote so GitHub detection fails
         subprocess.run(
@@ -442,9 +440,7 @@ class TestGitHubRemoteWarning:
         with patch("release_py.core.changelog.generate_changelog") as mock_changelog:
             mock_changelog.return_value = "## [1.1.0]"
 
-            result = runner.invoke(
-                app, ["update", str(repo_with_feat_commit), "--execute"]
-            )
+            result = runner.invoke(app, ["update", str(repo_with_feat_commit), "--execute"])
 
             assert result.exit_code == 0
             # Should show warning about missing GitHub remote

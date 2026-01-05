@@ -480,9 +480,7 @@ class GitHubClient:
                     results = await asyncio.gather(*tasks, return_exceptions=True)
 
                     # Filter valid results (ignore exceptions and None)
-                    prs.extend(
-                        result for result in results if isinstance(result, dict) and result
-                    )
+                    prs.extend(result for result in results if isinstance(result, dict) and result)
         else:
             for i in range(0, len(sorted_pr_numbers), batch_size):
                 batch = sorted_pr_numbers[i : i + batch_size]
