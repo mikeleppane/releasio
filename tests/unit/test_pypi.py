@@ -839,3 +839,113 @@ class TestTrustedPublishing:
 
                 call_args = mock_run.call_args[0][0]
                 assert "--trusted-publishing=never" in call_args
+
+    def test_publish_uv_removes_tokens_when_oidc_available(self, tmp_path: Path):
+        """Tokens must be removed from env when using trusted publishing with OIDC.
+
+        uv rejects publishing when both OIDC and tokens are present:
+        "a username and a password are not allowed when using trusted publishing"
+        """
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        whl = dist_dir / "package-1.0.0.whl"
+        whl.touch()
+
+        config = PublishConfig(enabled=True, tool="uv", trusted_publishing=True)
+
+        with patch("shutil.which", return_value="/usr/bin/uv"):
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value = MagicMock(returncode=0)
+                with patch.dict(
+                    "os.environ",
+                    {
+                        "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "oidc_token",
+                        "ACTIONS_ID_TOKEN_REQUEST_URL": "https://example.com",
+                        "UV_PUBLISH_TOKEN": "pypi-secret-token",
+                        "PYPI_TOKEN": "another-token",
+                    },
+                ):
+                    publish_package(tmp_path, config, dist_files=[whl])
+
+                    # Verify tokens were removed from the env passed to subprocess
+                    call_kwargs = mock_run.call_args[1]
+                    env = call_kwargs.get("env", {})
+                    assert "UV_PUBLISH_TOKEN" not in env
+                    assert "PYPI_TOKEN" not in env
+                    # OIDC vars should still be present
+                    assert env.get("ACTIONS_ID_TOKEN_REQUEST_TOKEN") == "oidc_token"
+
+    def test_publish_uv_maps_pypi_token_when_no_oidc(self, tmp_path: Path):
+        """PYPI_TOKEN should be mapped to UV_PUBLISH_TOKEN when OIDC not available."""
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        whl = dist_dir / "package-1.0.0.whl"
+        whl.touch()
+
+        config = PublishConfig(enabled=True, tool="uv", trusted_publishing=True)
+
+        with patch("shutil.which", return_value="/usr/bin/uv"):
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value = MagicMock(returncode=0)
+                # OIDC not available, only PYPI_TOKEN set
+                with patch.dict(
+                    "os.environ",
+                    {"PYPI_TOKEN": "pypi-secret-token"},
+                    clear=True,
+                ):
+                    publish_package(tmp_path, config, dist_files=[whl])
+
+                    call_kwargs = mock_run.call_args[1]
+                    env = call_kwargs.get("env", {})
+                    # PYPI_TOKEN should be mapped to UV_PUBLISH_TOKEN
+                    assert env.get("UV_PUBLISH_TOKEN") == "pypi-secret-token"
+
+    def test_publish_uv_maps_pypi_token_when_trusted_disabled(self, tmp_path: Path):
+        """PYPI_TOKEN should be mapped to UV_PUBLISH_TOKEN when trusted publishing disabled."""
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        whl = dist_dir / "package-1.0.0.whl"
+        whl.touch()
+
+        config = PublishConfig(enabled=True, tool="uv", trusted_publishing=False)
+
+        with patch("shutil.which", return_value="/usr/bin/uv"):
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value = MagicMock(returncode=0)
+                with patch.dict(
+                    "os.environ",
+                    {"PYPI_TOKEN": "pypi-secret-token"},
+                    clear=True,
+                ):
+                    publish_package(tmp_path, config, dist_files=[whl])
+
+                    call_kwargs = mock_run.call_args[1]
+                    env = call_kwargs.get("env", {})
+                    assert env.get("UV_PUBLISH_TOKEN") == "pypi-secret-token"
+
+    def test_publish_uv_preserves_uv_publish_token_over_pypi_token(self, tmp_path: Path):
+        """UV_PUBLISH_TOKEN takes precedence over PYPI_TOKEN."""
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        whl = dist_dir / "package-1.0.0.whl"
+        whl.touch()
+
+        config = PublishConfig(enabled=True, tool="uv", trusted_publishing=False)
+
+        with patch("shutil.which", return_value="/usr/bin/uv"):
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value = MagicMock(returncode=0)
+                with patch.dict(
+                    "os.environ",
+                    {
+                        "UV_PUBLISH_TOKEN": "uv-native-token",
+                        "PYPI_TOKEN": "pypi-token",
+                    },
+                    clear=True,
+                ):
+                    publish_package(tmp_path, config, dist_files=[whl])
+
+                    call_kwargs = mock_run.call_args[1]
+                    env = call_kwargs.get("env", {})
+                    # UV_PUBLISH_TOKEN should NOT be overwritten
+                    assert env.get("UV_PUBLISH_TOKEN") == "uv-native-token"

@@ -257,36 +257,41 @@ def _publish_with_uv(
     Supports trusted publishing (OIDC) when running in GitHub Actions.
     Uses --trusted-publishing flag based on config and environment.
 
-    Token precedence:
-    1. UV_PUBLISH_TOKEN (uv's native env var)
-    2. PYPI_TOKEN (common convention, mapped to UV_PUBLISH_TOKEN)
-    3. Trusted publishing (OIDC) if available
+    Authentication precedence:
+    1. Trusted publishing (OIDC) if config.trusted_publishing=True and OIDC env available
+       - Tokens are explicitly removed from env to avoid conflicts
+    2. Token-based auth (fallback or when trusted_publishing=False):
+       - UV_PUBLISH_TOKEN (uv's native env var)
+       - PYPI_TOKEN (mapped to UV_PUBLISH_TOKEN)
     """
     if shutil.which("uv") is None:
         raise PublishError("uv not found. Install with: pip install uv")
 
-    # Prepare environment - map PYPI_TOKEN to UV_PUBLISH_TOKEN if needed
     env = os.environ.copy()
-    if "UV_PUBLISH_TOKEN" not in env and "PYPI_TOKEN" in env:
-        env["UV_PUBLISH_TOKEN"] = env["PYPI_TOKEN"]
-
     cmd = ["uv", "publish"]
 
     # Add registry if not default PyPI
     if config.registry != "https://upload.pypi.org/legacy/":
         cmd.extend(["--publish-url", config.registry])
 
-    # Configure trusted publishing based on config and environment
-    if config.trusted_publishing:
-        if is_trusted_publishing_available():
-            # OIDC environment detected, use trusted publishing
-            cmd.append("--trusted-publishing=always")
-        else:
-            # Let uv auto-detect (falls back to token if OIDC not available)
-            cmd.append("--trusted-publishing=automatic")
+    # Configure authentication based on trusted publishing config and environment
+    if config.trusted_publishing and is_trusted_publishing_available():
+        # OIDC environment detected - use trusted publishing exclusively
+        # IMPORTANT: Remove any token from env to avoid "username and password not allowed" error
+        cmd.append("--trusted-publishing=always")
+        env.pop("UV_PUBLISH_TOKEN", None)
+        env.pop("PYPI_TOKEN", None)
+    elif config.trusted_publishing:
+        # Trusted publishing enabled but OIDC not available - let uv auto-detect
+        cmd.append("--trusted-publishing=automatic")
+        # Map PYPI_TOKEN to UV_PUBLISH_TOKEN for fallback
+        if "UV_PUBLISH_TOKEN" not in env and "PYPI_TOKEN" in env:
+            env["UV_PUBLISH_TOKEN"] = env["PYPI_TOKEN"]
     else:
-        # Trusted publishing disabled, require token
+        # Trusted publishing disabled - require token
         cmd.append("--trusted-publishing=never")
+        if "UV_PUBLISH_TOKEN" not in env and "PYPI_TOKEN" in env:
+            env["UV_PUBLISH_TOKEN"] = env["PYPI_TOKEN"]
 
     # Add files
     cmd.extend(str(f) for f in dist_files)
