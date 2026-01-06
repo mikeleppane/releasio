@@ -1,3 +1,8 @@
+## [2.4.0] - 2026-01-06
+
+### 🚀 Features
+
+- *(github)* Add configurable release_name_format for GitHub releases
 ## [2.3.0] - 2026-01-06
 
 ### 🚀 Features
