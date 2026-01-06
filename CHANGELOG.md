@@ -1,3 +1,8 @@
+## [2.2.1] - 2026-01-06
+
+### 🐛 Bug Fixes
+
+- *(release)* Use bulleted list for contributors section
 ## [2.2.0] - 2026-01-06
 
 ### 🚀 Features
