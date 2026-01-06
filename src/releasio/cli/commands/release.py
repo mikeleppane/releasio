@@ -513,13 +513,12 @@ def _generate_release_body(
         if github_usernames:
             lines.append("## Contributors")
             lines.append("")
-            username_links = [f"[@{u}](https://github.com/{u})" for u in github_usernames]
-            lines.append(" • ".join(username_links))
+            lines.extend(f"- [@{u}](https://github.com/{u})" for u in github_usernames)
             lines.append("")
         elif contributors:
             lines.append("## Contributors")
             lines.append("")
-            lines.append(", ".join(contributors))
+            lines.extend(f"- {c}" for c in contributors)
             lines.append("")
 
     # Assets section (if any)
