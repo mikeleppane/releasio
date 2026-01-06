@@ -1,6 +1,6 @@
 [project]
 name = "releasio"
-version = "2.2.0"
+version = "2.2.1"
 description = "Best-in-class Python release automation, inspired by release-plz"
 readme = "README.md"
 license = "MIT"
