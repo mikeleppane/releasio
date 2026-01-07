@@ -1,3 +1,8 @@
+## [2.4.1] - 2026-01-07
+
+### 🐛 Bug Fixes
+
+- *(changelog)* Respect changelog.enabled config and clarify git-cliff is optional
 ## [2.4.0] - 2026-01-06
 
 ### 🚀 Features
